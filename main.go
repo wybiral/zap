@@ -38,6 +38,11 @@ func main() {
 			ArgsUsage: "path",
 		},
 		&cli.Command{
+			Name:   "download",
+			Usage:  "Copy all files from device to local directory",
+			Action: cmdDownload,
+		},
+		&cli.Command{
 			Name:      "get",
 			Usage:     "Copy a file from the device",
 			Action:    cmdGet,
@@ -95,7 +100,7 @@ func main() {
 		},
 		&cli.Command{
 			Name:   "upload",
-			Usage:  "Copy all files in local directory to device",
+			Usage:  "Copy all files from local directory to device",
 			Action: cmdUpload,
 		},
 		&cli.Command{
@@ -154,6 +159,19 @@ func cmdCd(ctx *cli.Context) error {
 	}
 	defer r.ExitRawMode()
 	return r.Cd(ctx.Args().Get(0))
+}
+
+func cmdDownload(ctx *cli.Context) error {
+	r, err := repl.Connect(ctx.String("device"), ctx.Int("baudrate"))
+	if err != nil {
+		return err
+	}
+	err = r.EnterRawMode()
+	if err != nil {
+		return err
+	}
+	defer r.ExitRawMode()
+	return r.Download()
 }
 
 func cmdGet(ctx *cli.Context) error {

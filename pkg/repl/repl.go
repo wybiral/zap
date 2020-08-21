@@ -186,6 +186,22 @@ func (r *Repl) Cd(d string) error {
 	return nil
 }
 
+// Download all files from the MicroPython device to the local directory
+func (r *Repl) Download() error {
+	fs, err := r.Ls()
+	if err != nil {
+		return err
+	}
+	for _, fn := range fs {
+		fmt.Println("Downloading", fn, "...")
+		err = r.Get(fn, fn)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 // Get copies a file from the MicroPython device to the local machine
 func (r *Repl) Get(dst, src string) error {
 	f, err := os.OpenFile(dst, os.O_WRONLY|os.O_CREATE, 0666)
