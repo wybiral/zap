@@ -8,6 +8,7 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/tarm/serial"
@@ -161,14 +162,14 @@ func (r *Repl) Exec(code []byte, w io.Writer) ([]byte, error) {
 }
 
 // Cat reads the contents of a file
-func (r *Repl) Cat(f string) error {
+func (r *Repl) Cat(w io.Writer, f string) error {
 	code := []byte(`with open("` + f + `") as f:
 	while True:
 		b = f.read(256)
 		if not b:
 			break
 		print(b, end='')`)
-	_, err := r.Exec(code, os.Stdout)
+	_, err := r.Exec(code, w)
 	if err != nil {
 		return err
 	}
@@ -178,7 +179,7 @@ func (r *Repl) Cat(f string) error {
 // Cd changes the current working directory
 func (r *Repl) Cd(d string) error {
 	code := []byte("import uos\nuos.chdir(\"" + d + "\")")
-	_, err := r.Exec(code, os.Stdout)
+	_, err := r.Exec(code, nil)
 	if err != nil {
 		return err
 	}
@@ -218,23 +219,24 @@ print(d.strip(),end='')
 }
 
 // Ls lists the contents of the current directory
-func (r *Repl) Ls() error {
+func (r *Repl) Ls() ([]string, error) {
 	code := []byte(`import uos
 for f in uos.ilistdir('.'):
-	print(f[0], end='/  ' if f[1] & 0x4000 else '  ')
-print('')
+	print(f[0], end='/ ' if f[1] & 0x4000 else ' ')
 `)
-	_, err := r.Exec(code, os.Stdout)
+	b := &strings.Builder{}
+	_, err := r.Exec(code, b)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	return nil
+	s := strings.TrimRight(b.String(), " ")
+	return strings.Split(s, " "), nil
 }
 
 // Mkdir makes a new directory
 func (r *Repl) Mkdir(d string) error {
 	code := []byte("import uos\nuos.mkdir('" + d + "')")
-	_, err := r.Exec(code, os.Stdout)
+	_, err := r.Exec(code, nil)
 	if err != nil {
 		return err
 	}
@@ -250,7 +252,7 @@ func (r *Repl) Put(dst, src string) error {
 	_, err = r.Exec([]byte(`from ubinascii import a2b_base64
 f=open("`+dst+`",'wb')
 w=lambda x:f.write(a2b_base64(x))
-`), os.Stdout)
+`), nil)
 	if err != nil {
 		return err
 	}
@@ -264,32 +266,33 @@ w=lambda x:f.write(a2b_base64(x))
 			return err
 		}
 		e := base64.StdEncoding.EncodeToString(b[:n])
-		_, err = r.Exec([]byte("w(\""+e+"\")\n"), os.Stdout)
+		_, err = r.Exec([]byte("w(\""+e+"\")\n"), nil)
 		if err != nil {
 			return err
 		}
 	}
-	_, err = r.Exec([]byte("f.close()"), os.Stdout)
+	_, err = r.Exec([]byte("f.close()"), nil)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-// Pwd prints the working directory
-func (r *Repl) Pwd() error {
-	code := []byte("import uos\nprint(uos.getcwd())")
-	_, err := r.Exec(code, os.Stdout)
+// Cwd returns the current working directory
+func (r *Repl) Cwd() (string, error) {
+	code := []byte("import uos\nprint(uos.getcwd(),end='')")
+	b := &strings.Builder{}
+	_, err := r.Exec(code, b)
 	if err != nil {
-		return err
+		return "", err
 	}
-	return nil
+	return b.String(), nil
 }
 
 // Rm removes a file
 func (r *Repl) Rm(f string) error {
 	code := []byte("import uos\nuos.remove(\"" + f + "\")")
-	_, err := r.Exec(code, os.Stdout)
+	_, err := r.Exec(code, nil)
 	if err != nil {
 		return err
 	}
@@ -299,7 +302,7 @@ func (r *Repl) Rm(f string) error {
 // Rmdir removes a directory
 func (r *Repl) Rmdir(d string) error {
 	code := []byte("import uos\nuos.rmdir('" + d + "')")
-	_, err := r.Exec(code, os.Stdout)
+	_, err := r.Exec(code, nil)
 	if err != nil {
 		return err
 	}

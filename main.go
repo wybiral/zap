@@ -140,7 +140,7 @@ func cmdCat(ctx *cli.Context) error {
 		return err
 	}
 	defer r.ExitRawMode()
-	return r.Cat(ctx.Args().Get(0))
+	return r.Cat(os.Stdout, ctx.Args().Get(0))
 }
 
 func cmdCd(ctx *cli.Context) error {
@@ -195,7 +195,15 @@ func cmdLs(ctx *cli.Context) error {
 		return err
 	}
 	defer r.ExitRawMode()
-	return r.Ls()
+	fs, err := r.Ls()
+	if err != nil {
+		return err
+	}
+	for _, f := range fs {
+		fmt.Print(f + "  ")
+	}
+	fmt.Print("\n")
+	return nil
 }
 
 func cmdMkdir(ctx *cli.Context) error {
@@ -240,7 +248,12 @@ func cmdPwd(ctx *cli.Context) error {
 		return err
 	}
 	defer r.ExitRawMode()
-	return r.Pwd()
+	cwd, err := r.Cwd()
+	if err != nil {
+		return err
+	}
+	fmt.Println(cwd)
+	return nil
 }
 
 func cmdReboot(ctx *cli.Context) error {
