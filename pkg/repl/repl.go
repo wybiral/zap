@@ -193,6 +193,9 @@ func (r *Repl) Download() error {
 		return err
 	}
 	for _, fn := range fs {
+		if strings.HasSuffix(fn, "/") {
+			continue
+		}
 		fmt.Println("Downloading", fn, "...")
 		err = r.Get(fn, fn)
 		if err != nil {
