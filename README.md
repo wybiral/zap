@@ -23,6 +23,8 @@ MicroPython CLI tool.
 
 The easiest way to use zap is to set the environment variable `PYBOARD_DEVICE` to whatever serial device your board is connected to. On Windows that could be something like `COM1`, `COM2`, etc. On Linux it may be something like `/dev/ttyACM0`. If you don't want to use an environment variable you can supply the `--device` or `-d` flag.
 
+If there's code running in the background it can interfere with any of these actions so it's usually best to run `zap reboot` which will perform a soft reboot and stop any existing code.
+
 Enter the MicroPython REPL:
 ```
 zap repl
